@@ -48,7 +48,9 @@ rm(seg4)
 ################################################################################
 iv_dat.2 <- bind_cols(iv_dat, prob3, prob4)
 
+set.seed(3456)
 mod1.2 <- lazypred(iv_dat.2, dv, partition)
+save(mod1.2, file="./output/mod1.2.Rdata")
 
 #Plotting Predictive Accuracy for Train & CV Test
 acc_plot(mod1.2$a_dat)
@@ -75,10 +77,11 @@ rm(prob3, prob4, pred3, pred4)
 #Predict Segment Membership
 scored <- predict(mod1.2$fit, score, type="raw")
 
-results <- cbind(descr::freq(dv)[,1],
-                 scales::percent(round(descr::freq(dv)[,2]/100, digits=3)),
-                 scales::comma(descr::freq(scored)[,1]),
-                 scales::percent(round(descr::freq(scored)[,2]/100, digits=3)))
+results <- cbind(descr::freq(dv, plot=FALSE)[,1],
+                 scales::percent(round(descr::freq(dv, plot=FALSE)[,2]/100, digits=3)),
+                 scales::comma(descr::freq(scored, plot=FALSE)[,1]),
+                 scales::percent(round(descr::freq(scored, plot=FALSE)[,2]/100, digits=3)))
+
 results <- data.frame(results) %>%
   mutate(Segment = row.names(results)) %>%
   select(Segment, everything())

@@ -15,6 +15,7 @@ summary <- readr::read_csv("./data/summary.csv") %>%
   select(-Data)
 names(summary) <- c("Algorithm", "Accuracy", "Segment 1", "Segment 2", "Segment 3", 
                     "Segment 4", "Segment 5")
+save(summary, file="./output/summary.Rdata")
 
 # Visualize the Data
 ################################################################################
