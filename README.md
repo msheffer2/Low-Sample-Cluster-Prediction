@@ -396,23 +396,27 @@ accuracy for some of the segments (which subsequently would improve
 accuracy overall). The syntax files attached illustrate how I
 accomplished this but I ran to "pre-predictions" to see what each
 person's probability was of being in Segment 3 or in Segment 4 and
-included those two probabilities
+included those two probabilities as additional predictors to use in the
+model.
 
 ##### Figure 6: Cross Validation Accuracy Output
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-8-1.png)
 
-The graph in Figure 3 summarizes the change in the accuracy of the
-multi-class prediction in the traning dataset (yellow bar), in each of
-the 5 cross-validation folds (blue bars), and the average of the 5
-cross-validation folds (red bar). The CV suggests that the model is
-over-fit and that the accuracy is quite a bit below the perfect accuracy
-indicated in the confusion matrix; the CV estimate of the accuracy for
-this model is about 62%, not 100%.
+Figure 6 shows the improvement in accuracy with the additional
+predictors (compared to Figure 3). Now the model retains it's accuracy
+even after cross validations.
 
 ##### Figure 7: Cross Validation Sensitivity Output
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-9-1.png)
+
+Figure 7 also indicates that all 5 segments are uniformly well
+predicted. OK, these are really almost too hight to be believable and
+the real accuracies/sensitivities in this research were nothing this
+high. Nevertheless, this shows the general process and type of
+improvement or result I expect even if I almost never expect to get
+anything this high!
 
 ##### Table 2: Distribution of 5 Clusters in the Sample Data & Scored Database
 
@@ -479,7 +483,16 @@ this model is about 62%, not 100%.
 </tbody>
 </table>
 
-Text Text Text
+The last task, then, is to score the database so that the client can use
+the predictions to plan promotional or sales pieces targetted toward
+each segment. The "positive" sample bias noted above is even more
+obvious now once the estimated population sizes are shown in Table 2.
+Segment 4 was a critical group and represented about 13% of the sample
+but in reality, this group of individuals likely represents closer to 3%
+of the target universe for the client (as an aside, this low percentage
+was not a surprise to the client). Similarly, Segment 5 represent the
+lowest opportunity for the client; it was only about 22% of the sample
+but turned out to be a disappointing 41% of the target universe.
 
 ------------------------------------------------------------------------
 
