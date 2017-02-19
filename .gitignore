@@ -8,6 +8,7 @@
 *.Ruserdata
 *.Rproj
 *.html
+.Rproj.user
 
 #Compressed files
 *.zip
