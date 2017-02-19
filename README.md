@@ -14,6 +14,8 @@ their participation in the primary research.
 
 ### The Problem of Low Sample Size for Prediction
 
+------------------------------------------------------------------------
+
 Very often the number targetted physicians for promotional activities is
 relatively small, perhaps only 20,000 targetted invidiuals. This is a
 benefit since data for such a small universe can very easily be
@@ -38,303 +40,448 @@ predictive algorithms use cross validation for parameter tuning (Kuhn &
 Johnson 2013 \[1\]) but cross validation has been shown to be just as
 good as holdout data in some situations and is particularly useful when
 it isn't possible to use seperate testing data (Kohavi 1995 \[2\], Borra
-& Di Ciaccio 2010 \[3\]).
+& Di Ciaccio 2010 \[3\]). In this example, I illustrate how I created a
+process to use cross validation when predicting cluster assignments in
+low sample situations where a true test hold out was not possible.
 
-It is usually possible to incorporate actual prescribing data These
-markets consist of physicians about which the clients tend to know an
-awful lot about how they prescribe. This provides us with the
-opportunity to not only use this important behavioral data in the
-clustering, but it affords us the opportunity to use this same
-behavioral data to predict against. We often use primary survey research
-to help define the segments but this data for every physician.
+### Notes for this Example
 
-The data for this example come from a class in Marketing Analytics I
-took in the Predictive Analytics program at Northwestern. Since I can't
-use data from my own work, this data is a good stand-in for the types of
-new product models I have done over the years. The data originally came
-from a survey study doe several years ago (the exact time frame is
-unknown) and the specifics of the study (like the brands) have been
-masked so there isn't any chance of the data providing any market
-insights today.
+------------------------------------------------------------------------
 
-Originally, the purpose of the study was to identify the optimial new
-product configuration for a firm in the computer tablet market. Likely
-buyers of tablets participated in a marketing research study and where
-presented with an experimentally designed choice taks where they were
-asked to choose between a set of 3 possible products. The products on
-the choice "card" were described with several attributes, including the
-brand, screen size, amount of RAM, processor speed, and price.
+The data for this example come from a real-world piece of research but
+the data has been heavily modified and anomyzed so that it bears only
+the vaguest of correlation to the original data since all aspects of the
+research study and data must remain confidential. As a result, I cannot
+provide background on the study or describe the variables used in the
+analysis (all of the variable names have been obscured with a simple
+number system).
 
-There are actually a wide variety of choice models that can be employed
-for any particular new product scenario. This particular one is referred
-to as a Discrete Choice exercises because respondents were shown
-multiple possible products at one time and asked to make a choice of
-which one of the 3 they would purchase. There are many design decisions
-and trade-offs that need to be made conducting a study of this type.
-Since they data are not from a study I conducted, I cannot speak to
-those decisions or to the realism of this particular exercise so I'll
-use this as an example of the type of work that can be done rather than
-as an example of what should be done for this type of question.
+Unfortunately, I cannot provide any information on the cluster analysis
+without the ability to add this context so I only concentrate on the
+classification task. Additionally, I do not illustrate any EDA or
+variable importance information since this type of analysis didn't seem
+as interesting without the context.
+
+Last, the syntax files used here are an example of my process only; this
+does not represent the real syntax files I used for the original study.
+I used the code from the original study to develop an internal R package
+called "segpred" to help me automate some of the less interesting parts
+of the process and to assess many different types of predictive
+algorithms in the shortest time possible. The package is not shown here
+but I will show a summary of the results from the original study
+(altered and anomyzed) to illustrate my process. In this example,
+though, I provide syntax for a random forest predictive algorithm only.
 
 ### R syntax files I used to generate the material necessary for the repo:
 
 ------------------------------------------------------------------------
 
--   [1 -
-    Codeup.R](https://github.com/msheffer2/Hierarchical-Bayes-Choice-Study/blob/master/1%20-%20Codeup.R)
-    -- creates the datasets necessary for conducting the analysis,
-    including the experimental design file and the raw data containing
-    the product choices for respondents in the study.
--   [2 -
-    Model.R](https://github.com/msheffer2/Hierarchical-Bayes-Choice-Study/blob/master/2%20-%20Model.R)
-    -- the code to conduct the hierarchical Bayesian model, evaluate the
-    model, validate the fit, and export the coefficients for
-    later analysis.
--   [3 - Post Model
-    Analytics.R](https://github.com/msheffer2/Hierarchical-Bayes-Choice-Study/blob/master/3%20-%20Post%20Model%20Analytics.R)
-    -- this syntax files takes the model coefficients and generates the
-    graphs or datasets for the analytics presented in the readme file.
+-   [01 -
+    Codeup.R](https://github.com/msheffer2/Low-Sample-Cluster-Prediction/blob/master/01%20-%20Codeup.R)
+    -- takes a precleaned and anymized dataset and manipulates it for
+    the classification task to follow. It also shows the steps for data
+    cleaning (removing zero variance variables, transforming variables,
+    removing highly correlated variables) and preperation steps (setting
+    up cross validation partitions) prior to classifcation.
+-   [02 -
+    Model.R](https://github.com/msheffer2/Low-Sample-Cluster-Prediction/blob/master/02%20-%20Model%20Code.R)
+    -- lays out a few functions (also included in lazyfunctions.R) to
+    predict cluster membership via the caret package with parameter
+    tuning that makes use of parallel processing. This particular file
+    only uses a random forest predictive algorithm but forms the basis
+    of a function I wrote later to do the same types of tasks with
+    different algorithms. It also includes functions to peform the cross
+    validation and plot the accuracy and segment sensitivies for the
+    cross-validation step.
+-   [03 - Post Model
+    Analytics.R](https://github.com/msheffer2/Low-Sample-Cluster-Prediction/blob/master/03%20-%20Model%20Comparison.R)
+    -- Takes a summary file for multiple models and compares the
+    predictive accuracy across them. It also shows a heatmap of the
+    results to help identify a potential winner or to highlight
+    potential problems.
+-   [04 - Improved
+    Model.R](https://github.com/msheffer2/Low-Sample-Cluster-Prediction/blob/master/04%20-%20Improved%20Model.R)
+    -- an adaptation of 02 - Model.R that performs simplified
+    predictions for two troublesome segments, adds the probability of
+    membership as additional predictors to the original dataset, and
+    then refits the model to much better effect. It also scores the fake
+    "database" as is typical at the end of a process like this.
+-   [lazyfunctions.R](https://github.com/msheffer2/Low-Sample-Cluster-Prediction/blob/master/lazyfunctions.R)
+    -- this syntax file contains the functions originally written in
+    02 - Model.R. This files is called in 04 - Improved Model.R rather
+    than retyping the functions to keep the syntax files clean.
 
 #### Technical Notes:
 
--   All of this work should be entirely replicable and should offer a
-    pretty good idea of my workflow and how I like to organize my files
-    when conducting these types of models.
--   Larger data files have been compressed and split using 7-zip
-    for reproducibility.
--   I rarely have generated outputs from this type of study in R. I
-    often tend to export my raw data to Excel and generate Excel-based
-    outputs for my internal clients. Often, my materials are
-    post-processed by other team members to make more polished outputs
-    for reporting; in most cases, the critical outputs tend to be the
-    future market scenarios and the identificiation of the optimal
-    product configurations.
--   I was originally going to produce outputs in this notes section to
-    show some of diagnostic steps of performing a Hierarchical Bayesian
-    model, including looking for a stable region to pull the betas,
-    evaluating that the beta densities of the posterior are normal, and
-    validating the model results. I chose to eliminate these outputs
-    from this readme file due to length but these steps are described in
-    the syntax file [2 -
-    Model.R](https://github.com/msheffer2/Hierarchical-Bayes-Choice-Study/blob/master/2%20-%20Model.R)
+-   The work shown here is less "replicable" than some of the other
+    repos because of the need to alter all the original data and to
+    avoid showing lots of rather uninteresting syntax showing multiple
+    modelling efforts. Instead, I provide pre-cleaned or pre-outputted
+    data to streamline this process. The random forest predictions show
+    here, though, should be completely reproducible.
 
 ### Analytical Highlights
 
 ------------------------------------------------------------------------
 
-Respondents in this dataset were presented with 36 different scenarios,
-each containing product descriptions of 3 tablets to choose from. For
-each scenario, the respondent was to choose one of the available
-options. From this type of data, it's possible to model preference for
-the specific features or attirubes varied in the experimental design
-(the framework that established what product configurations are seen in
-each scenario). It is appropriate to model discrete choice data, like
-the data that comes from this piece of research, using a type of logit
-model. In this case, I'm performed a Hiearchcial Bayes Logit model. In
-my work, I have tended to prefer Bayesian models to aggregate models in
-these situatiosn because they have been shown to be quite good at
-recovering coefficients that reflect influencers of choice and they
-provide individual-level coefficients that can more accurately capture
-individual-level heterogeneity in decision-making processes.
+The original cluster work was part of a multi-step process to identify
+marketable segments for the pharmaceutical client. Unfortunately, I
+cannot describe the resulting segments but summaries of the segments
+were well received by the client. They next step was to predict segment
+membership based on available behavioral (prescribing) data only so that
+their database of ~26,000 targets could be scored.
 
-#### Technincal Model Results
+##### Table 1: Distribution of 5 Clusters in the Sample Data
 
-------------------------------------------------------------------------
+<table style="width:44%;">
+<colgroup>
+<col width="13%" />
+<col width="15%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Segment</th>
+<th align="center">Sample N</th>
+<th align="center">Sample %</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1</td>
+<td align="center">81</td>
+<td align="center">21.6%</td>
+</tr>
+<tr class="even">
+<td align="center">2</td>
+<td align="center">91</td>
+<td align="center">24.3%</td>
+</tr>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">72</td>
+<td align="center">19.2%</td>
+</tr>
+<tr class="even">
+<td align="center">4</td>
+<td align="center">49</td>
+<td align="center">13.1%</td>
+</tr>
+<tr class="odd">
+<td align="center">5</td>
+<td align="center">82</td>
+<td align="center">21.9%</td>
+</tr>
+<tr class="even">
+<td align="center">Total</td>
+<td align="center">375</td>
+<td align="center">100.0%</td>
+</tr>
+</tbody>
+</table>
 
-##### Table 1: Log Odds Ratios, Odds Ratio, and % Change in Odds for the Bayesian Logit Model
+The resulting solution consisted of 5 clusters that were roughly equal
+in size in the sample. Segment 4 was of particularly interest because it
+tended to have the highes prescribers who also had the most positive
+attitudes towards the treatment condition. The client was actually
+surprised that this group was "so big" at even 13% of the sample given
+how raw this type of treater is. As will be shown below, this likely
+results from some sample error that draws in "better" respondents more
+easily that "less valuable" respondents for the client.
 
-The table above shows the typical technical results from a logit model,
-including the log odds ration, the odds ration, and the percent change
-in odds. These types of outputs are fine for the data scientist but I
-rarely prepare this type of output for a client (either internal or
-external). Since logit coefficients are in fact log odds ratios that
-describe changes in the log-odds of a product being chosen, they lack
-the intuitive understanding I preferr to use when describing model
-results. Efforts to convert the log odds ratio into more easily
-understandable items like odds rations or percent change in the odds are
-also, in my opinion, not inuitive. So while I might look at results like
-this, along with other measure of model performance, I tend to prefer a
-different type of output when describing model outputs to others.
-
-#### Preferred Model Results
-
-------------------------------------------------------------------------
-
-##### Table 2: Probability a Product Will Be Chosen for Each Attribute & Level
-
-Instead of relying on coefficient outputs like those found in Table 1, I
-instead run simulations from the model that looks at every possible
-combination of products that can be described by the attributes and
-levels. I then calculate the probabilty that a product would be chosen
-out of a set of 3 typical products, on average when each attribute is
-varied (and holding all other features constant).
-
-When I tally the results, I get output that looks like Table 2 above.
-The probability column indicates how likely a product is to be chosen
-out of a set of 3 random products with all that is varied is the
-attribute to the left. For example, the 39.6% for a Screen Size of 5
-inches indicates that when everything is held constant, a 5 inch table
-has about a 40% chance of being chosen, on average, but a 10 inch screen
-table has a 48% probability of being chosen. This indicates that 10 inch
-screens are more preferable to 5 inch screen, on average, by about 8%.
-
-The data in Table 2 is a bit more inuitive and, although I'm showing it
-in tabular format here, it can be more easily plotted in a variety of
-ways. Also note that the model includes an interaction between price and
-brand that was shown in Table 1. In table 2, I've chosen to show the
-main effects only and to treat the interaction seprately.
-
-##### Figure 1: Interaction of Price & Brand on Probability a Product Will Be Chosen
-
-It's common in some markets, and in consumer electronics particuarly, to
-expect that price sensitivity for products will not be uniform across
-the brands. In other words, some brands are able to carry a price
-premium simply because of its brand equity while others might only ever
-be seen as a commodity brand that is penalized strongly for a higher
-price.
-
-Figure 1 shows how the probability of a product to be chosen changes
-over the range of prices and brands chosen. If there were no affect of
-brand on price, then the lines for the 4 brand would be parallel as
-price increases. This isn't the case, however. At lower prices, Brands A
-and C have a premium over Brands B and D, which are almost
-interchangable with each other. As prices increase, however, the effect
-of brand starts to diminish to the point where only a small premium is
-acceptable from Brands A and C at the highest price assessed. In fact,
-at $399, almost all 4 brands become more "replacable" with each other.
-
-It's also notable, though, that any brand at a lower price point has a
-higher probability of being chosen than any brand at a higher price
-point. For example, Brand A has the highest probability of being chosen
-at a price point of $299 but all brands will be more likely to be chosen
-if they are at a $199 price point. Overall, this suggests that price is
-critical to this market and that it can trump any brand equity in the
-market.
-
-#### Attribute Importance
+#### Model Function for Random Forest
 
 ------------------------------------------------------------------------
 
-##### Figure 2: Attribute Importance or the Amount of Variation in Choice Explained by Each Attribute
+Below is the function I wrote for this analysis (and which later formed
+the basis of a package I wrote to make this easier for future cluster
+predictions). I've included notes when nessary but I'd like to point out
+just a few features I considered when I wrote this code: \* Uses caret
+in this function for parameter tuning \* Takes into acount parallell
+processing, when possible, to assist in paramter tuning \* Performs
+cross validation after training to assess the predictive accuracy \*
+Collects the fit results and several other pieces of data for plotting
+and archiving \* NOTE: I'm suppressing warnings for this example only,
+but don't as a rule allow warnings to be surpressed in my own production
+environment.
 
-Typically, describing what product features or attributes are the most
-important for a product choice decision is necessary analytically. One
-way of measuring Attribute Importance is to measure how much each
-attribute can change the probability of choice for a typical product;
-attributes that result in large changes in probability in choice are
-more important while attributes that result in small changes in
-probability are less important. Often, the shifts in probability are
-measured as a percent of the total shift in probability possible. Each
-attributes shift in probability is then referred to as the amount of
-variation (in choice) that can be explained or accounted for by that
-particular attribute.
+    lazypred <- function(tdata, class, partition){
+      #caret settings
+      fitControl <- trainControl(method = "CV", 
+                                 number = 5, 
+                                 allowParallel = TRUE, 
+                                 summaryFunction=multiClassSummary)
+      cl <- makeCluster(10)
+      registerDoParallel(cl)
+      
+      #Fit the model
+      set.seed(3456)
+      
+      #NOTE: ONLY SUPRESSING WARNINGS FOR THIS EXAMPLE!
+      options(warn=-1)
+      #      In this case, CV results in some missing resample values in the 
+      #      performance measures inside caret, which generates a warning.  
+      #      To keep the output clean, I'm suppressing all warnings
+      
+      fit <- train(tdata, 
+                   class,
+                   method = "rf",
+                   trControl = fitControl,
+                   metric = "Accuracy",
+                   nthread = 10)
+      
+      #Predict the model
+      pred <- predict(fit, tdata, type="raw")
+      
+      #Train Accuracy
+      acc0 <- confusionMatrix(pred, class)
+      
+      #Cross-validate the model
+      for (i in 1:5){
+        set.seed(3456)
+        f <- train(tdata[partition != i,], 
+                   class[partition != i],
+                   method = "rf",
+                   trControl = fitControl,
+                   metric = "Accuracy",
+                   nthread = 10)
+        p <- predict(f, tdata[partition == i,], type="raw")
+        a <- confusionMatrix(p, class[partition == i])
+        assign(paste0("acc", i), a)
+        rm(f, p, a)
+      }  
+      #NOTE:  Returning warnings to normal
+      options(warn=0)
+      
+      stopCluster(cl)
+      
+      #Compile the confusion matrices
+      acc_dat <- list(acc0, acc1, acc2, acc3, acc4, acc5)
+      
+      #Pull out sensitivity data for plotting later
+      s_dat <- rbind(as.matrix(acc0, what="classes")[1,], 
+                     as.matrix(acc1, what="classes")[1,],
+                     as.matrix(acc2, what="classes")[1,],
+                     as.matrix(acc3, what="classes")[1,],
+                     as.matrix(acc4, what="classes")[1,],
+                     as.matrix(acc5, what="classes")[1,])
+      
+      #Pull out the accuracy data for plotting later
+      a_dat <- rbind(round(acc0$overall['Accuracy'], digits=3),
+                     round(acc1$overall['Accuracy'], digits=3),
+                     round(acc2$overall['Accuracy'], digits=3),
+                     round(acc3$overall['Accuracy'], digits=3),
+                     round(acc4$overall['Accuracy'], digits=3),
+                     round(acc5$overall['Accuracy'], digits=3))
+      
+      a_train <- scales::percent(a_dat[1])
+      a_test <- scales::percent(mean(a_dat[2:6]))
+      a_summary <- sprintf("Train Accuracy = %s, CV Accuracy = %s", a_train, a_test)
+      print(a_summary)
+      
+      #Compile output
+      output <- list(s_dat=s_dat, a_dat=a_dat,  acc_dat=acc_dat, fit=fit) 
+      return(output)
+    }
 
-Figure 2 shows just such a graph where each attribute is described by
-the proportion of choice probability each induce swhen we measure
-product choice with the varying levels available. Figure 2 suggests that
-price is the most important attribute in that in can account for almost
-half of the variation in product choice based on the range of prices
-assesed. Processor Speed accounts for about 30% of the change in product
-choice, which might have been a novel finding at the time these data
-were new but is probably not an accurate reflection today. Brand has
-very little effect on product choice; it only acounts for about 5% of
-the variation in product choice.
+The example above predicted segment membership using a random forest but
+in the real world, I would try many different types of predictive
+algorithms. The training accuracy results below show why cross
+validation is necessary.
 
-#### Part-worths Plot
+##### Figure 2: Training Accuracy Output
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction  1  2  3  4  5
+    ##          1 81  0  0  0  0
+    ##          2  0 91  0  0  0
+    ##          3  0  0 72  0  0
+    ##          4  0  0  0 49  0
+    ##          5  0  0  0  0 82
+    ## 
+    ## Overall Statistics
+    ##                                      
+    ##                Accuracy : 1          
+    ##                  95% CI : (0.9902, 1)
+    ##     No Information Rate : 0.2427     
+    ##     P-Value [Acc > NIR] : < 2.2e-16  
+    ##                                      
+    ##                   Kappa : 1          
+    ##  Mcnemar's Test P-Value : NA         
+    ## 
+    ## Statistics by Class:
+    ## 
+    ##                      Class: 1 Class: 2 Class: 3 Class: 4 Class: 5
+    ## Sensitivity             1.000   1.0000    1.000   1.0000   1.0000
+    ## Specificity             1.000   1.0000    1.000   1.0000   1.0000
+    ## Pos Pred Value          1.000   1.0000    1.000   1.0000   1.0000
+    ## Neg Pred Value          1.000   1.0000    1.000   1.0000   1.0000
+    ## Prevalence              0.216   0.2427    0.192   0.1307   0.2187
+    ## Detection Rate          0.216   0.2427    0.192   0.1307   0.2187
+    ## Detection Prevalence    0.216   0.2427    0.192   0.1307   0.2187
+    ## Balanced Accuracy       1.000   1.0000    1.000   1.0000   1.0000
+
+A perfect prediction! Too bad I don't believe it. It's suprising easy to
+get really great training predictions like the one shown in the
+confusion matrix above but this is exactly why we need to
+cross-validate: a large drop in accuracy indicates over-fitting and the
+CV results can provide a better picture of predictive accuracy.
+
+##### Figure 3: Cross Validation Accuracy Output
+
+![](README_files/figure-markdown_strict/unnamed-chunk-5-1.png)
+
+The graph in Figure 3 summarizes the change in the accuracy of the
+multi-class prediction in the traning dataset (yellow bar), in each of
+the 5 cross-validation folds (blue bars), and the average of the 5
+cross-validation folds (red bar). The CV suggests that the model is
+over-fit and that the accuracy is quite a bit below the perfect accuracy
+indicated in the confusion matrix; the CV estimate of the accuracy for
+this model is about 62%, not 100%.
+
+##### Figure 4: Cross Validation Sensitivity Output
+
+![](README_files/figure-markdown_strict/unnamed-chunk-6-1.png)
+
+In some contexts, 62% might be an acceptable level of accuracy but I
+prefer to achieve a higher level of accuracy for this type of problem.
+What's more, I also prefer to have all segments (or at least the key
+segments) be uniformly predicted in terms of accuracy. Figure 4 shows
+the sensitivites for each segment and it shows how non-uniform the
+accuracy is across the segments. The train sensitivity is shown in the
+yellow boxes while the average of the CV sensitivites ins shown in the
+red boxes. Segments 1, 2, and 5 are pretty accurately predicted
+(&gt;77%) but Segments 3 and 4 are very poor in their accuracy (&lt;
+20%). This is particularly problematic given how important Segment 4 was
+the the client.
+
+NOTE: In reality, EDA and variable importance might recommend some
+changes to make (including data transformations). In my syntax files, I
+actually perform this analysis on 4 different datasets to assess the
+value of different combinations of variables and different data
+transformations but this rarely improves the prediction over the raw
+data. For this example, let's assume this the best model and that EDA or
+variable importance (which I can't discuss) isn't helpful.
+
+#### Model Comparison Summary
 
 ------------------------------------------------------------------------
 
-##### Figure 3: How Each Attribute Level Adds or Subtracts Utility from Product Choice
+Figure 5 (below) summarizes output from the segpred package in a
+succient table that describes the dataset, predictive algorithm, train,
+and cv/test accuracy. In reality, this table would be much larger but
+I've reduced it to just the test accuracies and only included the raw
+dataset so that only the accuracy results are shown.
 
-Part-worths are a rather old-school way of describing the results of a
-choice model. Part-worths are usually calculated from the raw model
-coefficients and describe the amount of "utility" each level of each
-attribute provides to the overall value judgement of the product
-configuration. Rather than calculate true part-worths, I prefer to take
-the data from Table 2 to create something similar in spirit that allows
-for a single snapshot of what's going to happen when you put different
-attribute levels together.
+##### Figure 5: CV (Test) Accuracies for Various Predictive Models of Segment Membership
 
-Positive part-worths suggest that products with this specific feature
-have "positive utility" or are more likely to be chosen, while negative
-part-worths suggests that specific features are less likely to be
-chosen, all things being equal. When all the part-worths are plotting in
-order, a snapshot of the "good" and "bad" aspects of a new possible
-producht can be readily assessed in a single snapshot like that shown in
-Figure 3.
+![](README_files/figure-markdown_strict/unnamed-chunk-7-1.png)
 
-For example, a product haveing a price of $199 has a 32% greater
-probability of being chosen, on average, but a price of $399 for a new
-product has a 36% less change of being chosen. Specific levels of
-processor speed (2.5 GHz and 2 GHz) increase the probability of being
-chosen while a 1.5 GHz process reduces the likelihood of being chosen.
-Most of the attribute levels in the middle of the graph do very little
-to influence the probability of choice. One of the reasons I like this
-type of graph is that the length of the bars and the order of the levels
-combine the Attribute Importance information from Figure 2 with the
-relative findings from the utilities presented in Table 2.
+The heatmap in Figure 5 also sorts the results by the CV/Test Accuracy
+(Acc.). In this example, Random Forest algoirthms (both ranger and rf
+are caret executions of a random forest algorithm) perform well overall
+but the problem we saw about where Segments 3 and 4 are poorly predicted
+plauges all of the algoirhtms. Also, while random forest does best
+overall here, all of the algorithms do better than chance and could be
+acceptable depending on the context.
 
-#### Identifying the Optimal (and Sub-Optimal) Product Configurations
+#### Improving the Prediction for Segments 3 & 4
 
 ------------------------------------------------------------------------
 
-##### Table 3: Top 5 Most Chosen Product Configurations
+As is often the case, I need to see if I could improve the predictive
+accuracy for some of the segments (which subsequently would improve
+accuracy overall). The syntax files attached illustrate how I
+accomplished this but I ran to "pre-predictions" to see what each
+person's probability was of being in Segment 3 or in Segment 4 and
+included those two probabilities
 
-The strength of developing choice models is that it allows the data
-scientist to model any possible combination of attribute and level
-assessed regardless of if the specific configuration was actually seen
-by anyone. I often run all possible combinations of products and then
-rank order the results in order to identify the best and worst possible
-configurations. Table 3 shows the top 5 products with the highest
-probabiliyt of being chosen. The first product configuration (Brand A
-tablet with 10 in screen, 32 Gb RAM, 2.5 GHz Processor, and priced at
-$199) is the product predicted to be most often chosen (approximately
-99% of the time). But the table also suggests that 10 inch products from
-Brand A and priced at $199 are often top performers so there is some
-room to manipulate the product offering if other marketing factors are
-important to the decision.
+##### Figure 6: Cross Validation Accuracy Output
 
-##### Table 4: Bottom 5 Least Chosen Product Configurations
+![](README_files/figure-markdown_strict/unnamed-chunk-8-1.png)
 
-Conversely, Table 4 shows the 5 worst product configurations predicted
-by the model. The first product configuration (Brand B table with 5 in
-screen, 8 Gb RAM, 1.5 GHz Processor, and priced at $399) is the product
-predicted to be least often chosen (approximately 0% of the time).
-Unlike the Top 5, there's isn't a strong Brand trend but often the
-products are priced high (at $399) and have small screens and low RAM.
+The graph in Figure 3 summarizes the change in the accuracy of the
+multi-class prediction in the traning dataset (yellow bar), in each of
+the 5 cross-validation folds (blue bars), and the average of the 5
+cross-validation folds (red bar). The CV suggests that the model is
+over-fit and that the accuracy is quite a bit below the perfect accuracy
+indicated in the confusion matrix; the CV estimate of the accuracy for
+this model is about 62%, not 100%.
 
-#### Predicting Preference Share for Possible Market Scenarios
+##### Figure 7: Cross Validation Sensitivity Output
+
+![](README_files/figure-markdown_strict/unnamed-chunk-9-1.png)
+
+##### Table 2: Distribution of 5 Clusters in the Sample Data & Scored Database
+
+<table style="width:81%;">
+<colgroup>
+<col width="13%" />
+<col width="15%" />
+<col width="15%" />
+<col width="18%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">Segment</th>
+<th align="center">Sample N</th>
+<th align="center">Sample %</th>
+<th align="center">Database N</th>
+<th align="center">Database %</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">1</td>
+<td align="center">81</td>
+<td align="center">21.6%</td>
+<td align="center">7,322</td>
+<td align="center">27.3%</td>
+</tr>
+<tr class="even">
+<td align="center">2</td>
+<td align="center">91</td>
+<td align="center">24.3%</td>
+<td align="center">5,466</td>
+<td align="center">20.4%</td>
+</tr>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">72</td>
+<td align="center">19.2%</td>
+<td align="center">2,310</td>
+<td align="center">8.6%</td>
+</tr>
+<tr class="even">
+<td align="center">4</td>
+<td align="center">49</td>
+<td align="center">13.1%</td>
+<td align="center">759</td>
+<td align="center">2.8%</td>
+</tr>
+<tr class="odd">
+<td align="center">5</td>
+<td align="center">82</td>
+<td align="center">21.9%</td>
+<td align="center">10,983</td>
+<td align="center">40.9%</td>
+</tr>
+<tr class="even">
+<td align="center">Total</td>
+<td align="center">375</td>
+<td align="center">100.0%</td>
+<td align="center">26,840</td>
+<td align="center">100.0%</td>
+</tr>
+</tbody>
+</table>
+
+Text Text Text
 
 ------------------------------------------------------------------------
-
-##### Table 5: Market Scenario \#1 - Large Tablets Market Scenario
-
-Another extension of the power of the model to predict any combination
-of products is to simulate possible future market scenarios. In the
-class from which the data originally come, there were two additional
-scenarios that were to be predictived as if they represented possible
-scenarios of interest to the client. This is actually quite common and
-choice studies offer the oppportunity to conduct "what-if" scenarios to
-assess posssible future outcomes. In the first scenario, the client was
-intersting in what they thought was a reasonable market scenario with
-only 3 players in the "large" tablet market.
-
-The "client" was to be Brand A and the product configurations in the
-first market scenario represented the clients best guess about what was
-likely to be available to the market at launch. Table 5 indicates that
-if market scenario 1 occurs, the client's brand should garner the
-majority of share in the market (~65%) should there be a large tablet
-market with relatively similar capabilities and low prices.
-
-##### Table 6: Market Scenario \#2 - Small Tablets Market Scenario
-
-Table 6 offers a second "client scenario" but this time in the "small
-tablet" market space. Assuming the client was correct in that these
-would be the configurations for the 3 players in the market, their brand
-(A) would get about 50% of the market share, however, Brand B would be a
-strong competitor. It's likely that this scenario is determined most
-strongly by Brand C's decision to price expensively which, as we know,
-does the most to reduce the likelhiood that a product is chosen.
 
 ##### References Cited
 
