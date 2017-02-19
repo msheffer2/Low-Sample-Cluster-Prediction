@@ -22,3 +22,6 @@
 #Other temporary
 *.tmp
 *.bak
+
+#Blocking the predfuns directory since this syntax may be proprietary
+predfuns/
